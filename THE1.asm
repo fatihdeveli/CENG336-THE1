@@ -1,6 +1,5 @@
-; When you press and relase the RB0 then the four top most LEDs connected to PORTC will be turned on
-; Then when you press the RB0 the other four LEDs connected to PORTC  will be turned on
-; To execute this program The jumper J13 should be ground side
+; CENG336 THE1
+; Fatih Develi
 
 LIST    P=18F8722
 
@@ -8,19 +7,20 @@ LIST    P=18F8722
     
 CONFIG OSC = HSPLL, FCMEN = OFF, IESO = OFF, PWRT = OFF, BOREN = OFF, WDT = OFF, MCLRE = ON, LPT1OSC = OFF, LVP = OFF, XINST = OFF, DEBUG = OFF
 
- led_flag        udata 0X20
- led_flag
- button_released udata 0X21
- button_released
- button_pressed  udata 0X22
+ button_pressed  udata 0X20 ; flag to indicate button is pressed
  button_pressed
- counter1	 udata 0X23
+ button_released udata 0X21 ; flag to indicate button is released
+ button_released
+ counter1	 udata 0X22
  counter1
- counter2	 udata 0X24
+ counter2	 udata 0X23
  counter2
- counter3	 udata 0X25
+ counter3	 udata 0X24
  counter3
-
+ state		 udata 0X25 ; current state of the program
+ state
+ last_led	 udata 0X26 ; last led that was turned on
+	 
 ORG     0x00
 goto    main
 
@@ -46,9 +46,6 @@ clrf LATA
 clrf PORTA
 
 movlw h'00'
-movwf led_flag
-
-movlw h'00'
 movwf button_released
 
 movlw h'00'
@@ -58,6 +55,9 @@ movlw h'00'
 movwf counter1
 movwf counter2
 movwf counter3
+ 
+movlw h'01' ; set the current state to 1
+movwf state
 
 BCF INTCON2,7
 
@@ -132,13 +132,13 @@ return
 return_with_flag ; return by setting the button released flag for the program to take action
 movwf button_released ; button_released = true
 movlw 0x00
-movwf button_pressed ; reset flag
 return
 
 
 led1 ;turn on 1 led
 movlw h'01'
 movwf LATA
+movwf last_led
 movlw h'00'
 movwf LATB
 movwf LATC
@@ -146,6 +146,8 @@ movwf LATD
 call wait_input500
 btfsc button_released, 0
 goto state2
+btfss state, 1
+goto led1
 goto led2
     
 led2 ;turn on 2 leds
@@ -155,9 +157,13 @@ movlw h'00'
 movwf LATB
 movwf LATC
 movwf LATD
+movwf h'02'
+movwf last_led
 call wait_input500
 btfsc button_released, 0
 goto state2
+btfss state, 1 ; if the state is 1, go forward, otherwise (state3) go backwards.
+goto led1
 goto led3
     
 led3 ;turn on 3 leds
@@ -167,9 +173,13 @@ movlw h'00'
 movwf LATB
 movwf LATC
 movwf LATD
+movlw 0x03
+movwf last_led
 call wait_input500
 btfsc button_released, 0
 goto state2
+btfss state, 1 ; if the state is 1, go forward, otherwise (state3) go backwards.
+goto led2
 goto led4
     
 led4 ;turn on 4 leds
@@ -179,9 +189,13 @@ movlw h'00'
 movwf LATB
 movwf LATC
 movwf LATD
+movlw 0x04
+movwf last_led
 call wait_input500
 btfsc button_released, 0
 goto state2
+btfss state, 1 ; if the state is 1, go forward, otherwise (state3) go backwards.
+goto led3
 goto led5
     
 led5 ;turn on 5 leds
@@ -192,9 +206,13 @@ movwf LATB
 movlw h'00'
 movwf LATC
 movwf LATD
+movlw 0x05
+movwf last_led
 call wait_input500
 btfsc button_released, 0
 goto state2
+btfss state, 1 ; if the state is 1, go forward, otherwise (state3) go backwards.
+goto led4
 goto led6
     
 led6 ;turn on 6 leds
@@ -205,10 +223,14 @@ movwf LATB
 movlw h'00'
 movwf LATC
 movwf LATD
+movlw 0x06
+movwf last_led
 call wait_input500
 btfsc button_released, 0
 goto state2
-goto led7
+btfss state, 1 ; if the state is 1, go forward, otherwise (state3) go backwards.
+goto led5 ; backward
+goto led7 ; forward
     
 led7 ;turn on 7 leds
 movlw h'0F'
@@ -218,9 +240,13 @@ movwf LATB
 movlw h'00'
 movwf LATC
 movwf LATD
+movlw 0x07
+movwf last_led
 call wait_input500
 btfsc button_released, 0
 goto state2
+btfss state, 1 ; if the state is 1, go forward, otherwise (state3) go backwards.
+goto led6
 goto led8
     
 led8 ;turn on 8 leds
@@ -230,9 +256,13 @@ movwf LATB
 movlw h'00'
 movwf LATC
 movwf LATD
+movlw 0x08
+movwf last_led
 call wait_input500
 btfsc button_released, 0
 goto state2
+btfss state, 1 ; if the state is 1, go forward, otherwise (state3) go backwards.
+goto led7
 goto led9
     
 led9 ;turn on 9 leds
@@ -243,9 +273,13 @@ movlw h'01'
 movwf LATC
 movlw h'00'
 movwf LATD
+movlw 0x09
+movwf last_led
 call wait_input500
 btfsc button_released, 0
 goto state2
+btfss state, 1 ; if the state is 1, go forward, otherwise (state3) go backwards.
+goto led8
 goto led10
     
 led10 ;turn on 10 leds
@@ -256,9 +290,13 @@ movlw h'03'
 movwf LATC
 movlw h'00'
 movwf LATD
+movlw 0x0A
+movwf last_led
 call wait_input500
 btfsc button_released, 0
 goto state2
+btfss state, 1 ; if the state is 1, go forward, otherwise (state3) go backwards.
+goto led9
 goto led11
     
 led11 ;turn on 11 leds
@@ -269,9 +307,13 @@ movlw h'07'
 movwf LATC
 movlw h'00'
 movwf LATD
+movlw 0x0B
+movwf last_led
 call wait_input500
 btfsc button_released, 0
 goto state2
+btfss state, 1 ; if the state is 1, go forward, otherwise (state3) go backwards.
+goto led10
 goto led12
     
 led12 ;turn on 12 leds
@@ -281,9 +323,13 @@ movwf LATB
 movwf LATC  
 movlw h'00'
 movwf LATD
+movlw 0x0C
+movwf last_led
 call wait_input500
 btfsc button_released, 0
 goto state2
+btfss state, 1 ; if the state is 1, go forward, otherwise (state3) go backwards.
+goto led11
 goto led13
     
 led13 ;turn on 13 leds
@@ -293,9 +339,13 @@ movwf LATB
 movwf LATC
 movlw h'01'
 movwf LATD
+movlw 0x0D
+movwf last_led
 call wait_input500
 btfsc button_released, 0
 goto state2
+btfss state, 1 ; if the state is 1, go forward, otherwise (state3) go backwards.
+goto led12
 goto led14
     
 led14 ;turn on 14 leds
@@ -305,9 +355,13 @@ movwf LATB
 movwf LATC
 movlw h'03'
 movwf LATD
+movlw 0x0E
+movwf last_led
 call wait_input500
 btfsc button_released, 0
 goto state2
+btfss state, 1 ; if the state is 1, go forward, otherwise (state3) go backwards.
+goto led13
 goto led15
     
 led15 ;turn on 15 leds
@@ -317,9 +371,13 @@ movwf LATB
 movwf LATC
 movlw h'07'
 movwf LATD
+movlw 0x0F
+movwf last_led
 call wait_input500
 btfsc button_released, 0
 goto state2
+btfss state, 1 ; if the state is 1, go forward, otherwise (state3) go backwards.
+goto led14
 goto led16
     
 led16 ;turn on 16 leds
@@ -328,17 +386,26 @@ movwf LATA
 movwf LATB
 movwf LATC
 movwf LATD
+movlw 0x10
+movwf last_led
 call wait_input500
 btfsc button_released, 0
 goto state2
+btfss state, 1 ; if the state is 1, go forward, otherwise (state3) go backwards.
+goto led14
 goto led16
   
-state2:
-movlw h'F0'
-movwf LATA
-movwf LATB
-movwf LATC
-movwf LATD
+state2: ; Expect input RE3 or RE4
+movlw 0x02
+movwf state ; set the current state to 2
+movlw 0x01
+btfsc PORTE, 3 ; go to state 1
+movwf state
+movlw 0x03
+btfsc PORTE, 4 ; go to state 3
+movwf state
+    
+;continue if no input
 goto state2
 
  
